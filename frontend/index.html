@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Keyboard Controller Hub</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Background glow elements -->
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <span class="logo-icon">⌨️</span>
+                <h1>Antigravity Keyboard Hub</h1>
+            </div>
+            <div class="status-bar">
+                <div class="status-item" id="ws-status">
+                    <span class="status-dot disconnected"></span>
+                    Backend Connection: <strong id="ws-text">Disconnected</strong>
+                </div>
+                <div class="status-item" id="rgb-status">
+                    <span class="status-dot simulated"></span>
+                    RGB Sync: <strong id="rgb-text">Simulated</strong>
+                </div>
+                <div class="status-item" id="device-status">
+                    <span class="status-dot connected"></span>
+                    Active Device: <strong id="device-text">None</strong>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Body Layout -->
+        <div class="app-body">
+            <!-- Sidebar -->
+            <aside class="sidebar card">
+                <nav class="sidebar-nav">
+                    <button class="nav-btn active" data-tab="remapper">
+                        <span class="btn-icon">🔄</span> Key Remapper
+                    </button>
+                    <button class="nav-btn" data-tab="rgb">
+                        <span class="btn-icon">🌈</span> RGB Controller
+                    </button>
+                    <button class="nav-btn" data-tab="hid">
+                        <span class="btn-icon">📟</span> VIA HID Console
+                    </button>
+                </nav>
+
+                <hr class="sidebar-divider">
+
+                <!-- Dynamic Control Panel Area inside Sidebar -->
+                <div class="sidebar-panels">
+                    <!-- 1. REMAPPER PANEL -->
+                    <div class="control-panel active" id="panel-remapper">
+                        <h3>Remap Config</h3>
+                        <div class="toggle-container">
+                            <label class="switch">
+                                <input type="checkbox" id="remapper-toggle">
+                                <span class="slider round"></span>
+                            </label>
+                            <span>Enable Global Remapping</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="src-key">Source Physical Key</label>
+                            <select id="src-key">
+                                <!-- Filled by JS -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tgt-key">Target Mapped Key</label>
+                            <select id="tgt-key">
+                                <!-- Filled by JS -->
+                            </select>
+                        </div>
+                        
+                        <button id="add-mapping-btn" class="btn btn-primary">Add Key Mapping</button>
+
+                        <div class="mapping-list-section">
+                            <h4>Active Mappings</h4>
+                            <div class="mapping-list" id="active-mappings-list">
+                                <div class="empty-list-msg">No active mappings.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. RGB PANEL -->
+                    <div class="control-panel" id="panel-rgb">
+                        <h3>RGB Controls</h3>
+                        <div class="form-group">
+                            <label for="rgb-effect">Active Effect</label>
+                            <select id="rgb-effect">
+                                <option value="static">Static Color</option>
+                                <option value="rainbow">Rainbow Cycle</option>
+                                <option value="breathe">Breathing</option>
+                                <option value="wave">Reactive Wave</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="color-picker-group">
+                            <label for="rgb-color">Solid Color</label>
+                            <div class="color-picker-wrapper">
+                                <input type="color" id="rgb-color" value="#00ffff">
+                                <span class="color-hex-label">#00ffff</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="rgb-speed-slider">Effect Speed</label>
+                            <div class="range-container">
+                                <input type="range" id="rgb-speed-slider" min="0.2" max="3.0" step="0.1" value="1.0">
+                                <span class="range-val">1.0x</span>
+                            </div>
+                        </div>
+
+                        <div class="devices-section">
+                            <h4>OpenRGB Devices</h4>
+                            <div class="devices-list" id="openrgb-devices-list">
+                                <div class="loading-small">Connecting to OpenRGB daemon...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. HID PANEL -->
+                    <div class="control-panel" id="panel-hid">
+                        <h3>USB HID Explorer</h3>
+                        <button id="scan-hid-btn" class="btn btn-secondary">Scan USB Devices</button>
+                        
+                        <div class="form-group margin-top-15">
+                            <label for="hid-device-select">Select Device</label>
+                            <select id="hid-device-select">
+                                <option value="">No device connected</option>
+                            </select>
+                        </div>
+
+                        <div class="quick-commands">
+                            <h4>Quick VIA Commands</h4>
+                            <div class="btn-grid">
+                                <button class="btn btn-cmd" id="cmd-version" title="Queries QMK/VIA Protocol Version (Command 0x01)">Query Version</button>
+                                <button class="btn btn-cmd" id="cmd-get-key" title="Queries keycode at Layer 0, Row 0, Col 1 (Command 0x11)">Read Key (0,1)</button>
+                                <button class="btn btn-cmd" id="cmd-set-key" title="Sets keycode at Layer 0, Row 0, Col 1 to Backspace (Command 0x12)">Remap Key (0,1)</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content: Keyboard visualization and console log -->
+            <main class="main-content">
+                <!-- Keyboard Visualizer Panel -->
+                <section class="keyboard-visualizer card">
+                    <div class="visualizer-header">
+                        <h2>Keyboard Visualizer</h2>
+                        <span class="visualizer-tip">Press keys on your keyboard to watch them illuminate in real-time</span>
+                    </div>
+                    <div class="keyboard-wrapper">
+                        <!-- Keyboard rendered dynamically by JS -->
+                        <div class="keyboard-60" id="keyboard-grid"></div>
+                    </div>
+                </section>
+
+                <!-- Console / Terminal output for HID / logs -->
+                <section class="console-panel card">
+                    <div class="console-header">
+                        <h3>Universal Communications Log</h3>
+                        <button class="btn btn-text" id="clear-console-btn">Clear Log</button>
+                    </div>
+                    <div class="console-output" id="console-log">
+                        <div class="log-line system">[SYSTEM] Hub initialized. Ready to receive commands.</div>
+                    </div>
+                    <!-- Hex Input Line for HID -->
+                    <div class="console-input-bar">
+                        <span class="prompt">TX &gt;</span>
+                        <input type="text" id="hex-input" placeholder="01 00 00 00 ... (Write hex bytes separated by spaces)" val="01">
+                        <button id="send-hex-btn" class="btn btn-primary">Send Packet</button>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Main JavaScript -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
