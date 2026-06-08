@@ -166,6 +166,10 @@ class RGBManager:
     def _effect_loop(self):
         tick = 0
         while self.running:
+            # Auto-reconnect in the background if running in simulation mode (every 5 seconds)
+            if tick % 100 == 0 and self.client.simulated:
+                threading.Thread(target=self.client.connect, daemon=True).start()
+
             colors = []
             
             if self.active_effect == "static":
