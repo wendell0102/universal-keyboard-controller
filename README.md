@@ -77,7 +77,7 @@ Como o Windows exige privilégios administrativos para registrar ganchos globais
 
 ```powershell
 # Vá até a pasta do projeto
-cd C:\Users\pedro\.gemini\antigravity\scratch\universal-keyboard-controller\backend
+cd universal-keyboard-controller\backend
 
 # Execute o servidor
 python main.py
